@@ -26,7 +26,8 @@
   "homepage": "https://github.com/rtc-io/rtc-janus",
   "dependencies": {
     "hyperquest": "~0.2.0",
-    "uuid": "~1.4.1"
+    "uuid": "~1.4.1",
+    "cog": "~0.5.1"
   },
   "devDependencies": {
     "tape": "~2.4.2"
