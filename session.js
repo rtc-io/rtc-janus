@@ -37,6 +37,8 @@ proto.connect = function(uri, callback) {
       return callback(err);
     }
 
+    console.log(body);
+
     session.id = body && body.data && body.data.id;
     callback();
   });
@@ -49,8 +51,7 @@ proto._command = function(command, payload, callback) {
   }
 
   return this._post(extend({}, payload, {
-    janus: command,
-    transaction: uuid.v4()
+    janus: command
   }), callback);
 };
 
@@ -58,6 +59,9 @@ proto._command = function(command, payload, callback) {
   proto['_' + method] = function(payload, callback) {
     var req = request[method](this.uri);
     var chunks = [];
+
+    // attach a transaction to the payload
+    payload = extend({ transaction: uuid.v4() }, payload);
 
     req.setHeader('Content-Type', 'application/json');
     req.write(JSON.stringify(payload));
@@ -70,10 +74,22 @@ proto._command = function(command, payload, callback) {
       });
 
       res.on('end', function() {
-        callback(
-          ok ? null : new Error('invalid request: ' + res.statusCode),
-          jsonparse(chunks.join(''))
-        );
+        var body;
+
+        if (! ok) {
+          // TODO: more error details
+          return callback(new Error('request failed: ' + res.statusCode));
+        }
+
+        // parse the response body
+        body = jsonparse(chunks.join(''));
+
+        // check the transaction is a match
+        if (body.transaction !== payload.transaction) {
+          return callback(new Error('request mismatch from janus'));
+        }
+
+        callback(null, body);
       });
     });
 
