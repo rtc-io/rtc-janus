@@ -32,14 +32,12 @@ proto.connect = function(uri, callback) {
   // update the url
   this.uri = uri;
 
-  this._command('create', function(err, body) {
+  this._command('create', function(err, data) {
     if (err) {
       return callback(err);
     }
 
-    console.log(body);
-
-    session.id = body && body.data && body.data.id;
+    session.id = data && data.id;
     callback();
   });
 };
@@ -84,12 +82,17 @@ proto._command = function(command, payload, callback) {
         // parse the response body
         body = jsonparse(chunks.join(''));
 
+        // check for success
+        if (body.janus !== 'success') {
+          return callback(new Error('request failed: ' + body.janus));
+        }
+
         // check the transaction is a match
         if (body.transaction !== payload.transaction) {
           return callback(new Error('request mismatch from janus'));
         }
 
-        callback(null, body);
+        callback(null, body.data);;
       });
     });
 
