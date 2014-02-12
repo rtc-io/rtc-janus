@@ -3,16 +3,25 @@
 
 var JanusSession = require('./session');
 
-module.exports = function(url, opts, callback) {
-  // create the new janus session
-  var session = new JanusSession(opts);
+module.exports = function(uri, opts, callback) {
+  var session;
 
-  // handle initialization and errors
-  session.once('init', callback);
-  session.once('error', callback);
+  if (typeof opts == 'function') {
+    callback = opts;
+    opts = {};
+  }
+
+  // create the new janus session
+  session = new JanusSession(opts);
 
   // connect
-  session.connect(url);
+  session.connect(uri, function(err) {
+    if (err) {
+      return callback(err);
+    }
+
+    callback(null, session);
+  });
 
   return session;
 };
