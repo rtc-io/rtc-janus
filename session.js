@@ -7,6 +7,7 @@ var request = require('hyperquest');
 var uuid = require('uuid');
 var extend = require('cog/extend');
 var jsonparse = require('cog/jsonparse');
+var reTrailingSlash = /\/$/;
 
 function JanusSession(opts) {
   if (! (this instanceof JanusSession)) {
@@ -18,6 +19,9 @@ function JanusSession(opts) {
 
   // set the uri to null
   this.uri = null;
+
+  // initialise the plugins hash which will store plugin handle ids
+  this.plugins = {};
 }
 
 util.inherits(JanusSession.prototype, EventEmitter);
@@ -25,12 +29,49 @@ module.exports = JanusSession;
 
 var proto = JanusSession.prototype;
 
+/**
+  ### activate(namespace, callback)
+
+**/
+proto.activate = function(namespace, callback) {
+  var parts = namespace.split('.');
+  var session = this;
+  var pluginName;
+
+  // if we have not been provided, dot delimited plugin name then
+  // prepend janus.plugin to the pluginName
+  if (parts.length === 1) {
+    namespace = 'janus.plugin.' + namespace;
+    parts = namespace.split('.');
+  }
+
+  // get the plugin name (last part of the namespace)
+  pluginName = parts[parts.length - 1];
+
+  this._command('attach', { plugin: namespace }, function(err, data) {
+    var id = data && data.id;
+
+    if (err) {
+      return callback(err);
+    }
+
+    // update the plugin handles to include this handle
+    session.plugins[pluginName] = id;
+
+    // patch in the plugin method
+    session[pluginName] = proto._message.bind(session, id);
+
+    // fire the callback
+    callback();
+  });
+};
+
 proto.connect = function(uri, callback) {
   var session = this;
   var transaction = uuid.v4();
 
   // update the url
-  this.uri = uri;
+  this.uri = uri.replace(reTrailingSlash, '');
 
   this._command('create', function(err, data) {
     if (err) {
@@ -53,50 +94,133 @@ proto._command = function(command, payload, callback) {
   }), callback);
 };
 
-['get', 'post'].forEach(function(method) {
-  proto['_' + method] = function(payload, callback) {
-    var req = request[method](this.uri);
-    var chunks = [];
+proto._message = function(id, body, callback) {
+  var payload;
+  var session = this;
 
-    // attach a transaction to the payload
-    payload = extend({ transaction: uuid.v4() }, payload);
+  if (typeof body == 'function') {
+    callback = body;
+    body = {};
+  }
 
-    req.setHeader('Content-Type', 'application/json');
-    req.write(JSON.stringify(payload));
+  // initialise the payload
+  payload = {
+    body: body,
+    janus: 'message'
+  };
 
-    req.on('response', function(res) {
-      var ok = res && res.statusCode === 200;
+  return this._post(payload, { path: id, ok: 'ack' }, function(err) {
+    if (err) {
+      return callback(err);
+    }
 
-      res.on('data', function(data) {
-        chunks.push(data.toString());
-      });
+    session._status(callback);
+  });
+};
 
-      res.on('end', function() {
-        var body;
+proto._status = function(callback) {
+  var req = request.get(this.uri + '/' + this.id + '?rid=' + Date.now());
+  var chunks = [];
 
-        if (! ok) {
-          // TODO: more error details
-          return callback(new Error('request failed: ' + res.statusCode));
-        }
+  console.log('requesting status');
 
-        // parse the response body
-        body = jsonparse(chunks.join(''));
+  req.on('response', function(res) {
+    var ok = res && res.statusCode === 200;
 
-        // check for success
-        if (body.janus !== 'success') {
-          return callback(new Error('request failed: ' + body.janus));
-        }
+    console.log('got response: ', res);
 
-        // check the transaction is a match
-        if (body.transaction !== payload.transaction) {
-          return callback(new Error('request mismatch from janus'));
-        }
-
-        callback(null, body.data);;
-      });
+    res.on('data', function(data) {
+      chunks.push(data.toString());
     });
 
-    req.end();
+    res.on('end', function() {
+      var body;
 
-  };
-})
+      if (! ok) {
+        // TODO: more error details
+        return callback(new Error('request failed: ' + res.statusCode));
+      }
+
+      // parse the response body
+      body = jsonparse(chunks.join(''));
+      console.log('received status response: ', body);
+
+      // // check for success
+      // if (body.janus !== okResponse) {
+      //   return callback(new Error('request failed: ' + body.janus));
+      // }
+
+      // // check the transaction is a match
+      // if (body.transaction !== payload.transaction) {
+      //   return callback(new Error('request mismatch from janus'));
+      // }
+
+      // callback(null, body.data);;
+    });
+  });
+};
+
+proto._post = function(payload, opts, callback) {
+  var req;
+  var chunks = [];
+  var uri = this.uri;
+  var okResponse = 'success';
+
+  if (typeof opts == 'function') {
+    callback = opts;
+    opts = {};
+  }
+
+  // if we have been provided a custom ok message, then use that instead
+  if (opts.ok) {
+    okResponse = opts.ok;
+  }
+
+  // if we have a valid session id then route the request to that session
+  if (this.id) {
+    uri += '/' + this.id + (opts && opts.path ? '/' + opts.path : '');
+  }
+
+  // create the request
+  req = request.post(uri);
+
+  // attach a transaction to the payload
+  payload = extend({ transaction: uuid.v4() }, payload);
+
+  req.setHeader('Content-Type', 'application/json');
+  req.write(JSON.stringify(payload));
+
+  req.on('response', function(res) {
+    var ok = res && res.statusCode === 200;
+
+    res.on('data', function(data) {
+      chunks.push(data.toString());
+    });
+
+    res.on('end', function() {
+      var body;
+
+      if (! ok) {
+        // TODO: more error details
+        return callback(new Error('request failed: ' + res.statusCode));
+      }
+
+      // parse the response body
+      body = jsonparse(chunks.join(''));
+
+      // check for success
+      if (body.janus !== okResponse) {
+        return callback(new Error('request failed: ' + body.janus));
+      }
+
+      // check the transaction is a match
+      if (body.transaction !== payload.transaction) {
+        return callback(new Error('request mismatch from janus'));
+      }
+
+      callback(null, body.data);;
+    });
+  });
+
+  req.end();
+};
