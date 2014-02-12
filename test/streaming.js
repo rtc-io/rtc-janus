@@ -31,3 +31,10 @@ test('request the steaming session list', function(t) {
     t.ok(data && data.list, 'got expected response');
   });
 });
+
+test('disconnect session', function(t) {
+  t.plan(1);
+  session.disconnect(function(err) {
+    t.ifError(err, 'ok');
+  });
+});
