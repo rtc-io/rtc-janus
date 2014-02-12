@@ -29,6 +29,8 @@ test('request the steaming session list', function(t) {
   session.streaming({ request: 'list' }, function(err, data) {
     t.ifError(err);
     t.ok(data && data.list, 'got expected response');
+
+    console.log(data);
   });
 });
 
