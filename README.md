@@ -11,9 +11,45 @@ An in progress node and browserify compatible integration layer for the
 
 ## Example Usage
 
-To be completed.
+```js
+var async = require('async');
+var janus = require('rtc-janus');
 
-### activate(namespace, callback)
+janus('http://localhost:8088/janus', function(err, session) {
+  if (err) {
+    return console.error(err);
+  }
+
+  // activate the required plugins
+  async.map(
+    ['streaming', 'videocall'],
+    session.activate.bind(session),
+    function(err) {
+      console.log(arguments);
+    }
+  );
+});
+```
+
+## Reference
+
+### JanusSession
+
+Create a new JanusSession instance
+
+#### activate(namespace, callback)
+
+Activate the specified plugin.  A plugin can be specified by it's full
+namespace (e.g. `janus.plugin.streaming`) or if it is a standard janus
+plugin through just it's id (e.g. `streaming`).
+
+#### connect(uri, callback)
+
+Create a new connection to the janus gateway
+
+#### disconnect(callback)
+
+Disconnect from the gateway
 
 ## License(s)
 

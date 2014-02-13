@@ -9,7 +9,10 @@
 
   ## Example Usage
 
-  To be completed.
+  <<< examples/streaming.js
+
+  ## Reference
+
 **/
 
 var JanusSession = require('./session');

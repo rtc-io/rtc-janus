@@ -9,6 +9,11 @@ var extend = require('cog/extend');
 var jsonparse = require('cog/jsonparse');
 var reTrailingSlash = /\/$/;
 
+/**
+  ### JanusSession
+
+  Create a new JanusSession instance
+**/
 function JanusSession(opts) {
   if (! (this instanceof JanusSession)) {
     return new JanusSession(opts);
@@ -38,7 +43,11 @@ module.exports = JanusSession;
 var proto = JanusSession.prototype;
 
 /**
-  ### activate(namespace, callback)
+  #### activate(namespace, callback)
+
+  Activate the specified plugin.  A plugin can be specified by it's full
+  namespace (e.g. `janus.plugin.streaming`) or if it is a standard janus
+  plugin through just it's id (e.g. `streaming`).
 
 **/
 proto.activate = function(namespace, callback) {
@@ -70,10 +79,15 @@ proto.activate = function(namespace, callback) {
     session[pluginName] = proto._message.bind(session, id);
 
     // fire the callback
-    callback();
+    callback(null, id);
   });
 };
 
+/**
+  #### connect(uri, callback)
+
+  Create a new connection to the janus gateway
+**/
 proto.connect = function(uri, callback) {
   var session = this;
   var transaction = uuid.v4();
@@ -96,6 +110,11 @@ proto.connect = function(uri, callback) {
   });
 };
 
+/**
+  #### disconnect(callback)
+
+  Disconnect from the gateway
+**/
 proto.disconnect = function(callback) {
   var session = this;
 
