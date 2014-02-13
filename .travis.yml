@@ -21,6 +21,7 @@ before_install:
   - cd janus-gateway
   - make
   - ./janus & echo $! > janus.pid
+  - cd ../
 
 after_script:
   - kill $(cat janus.pid)
