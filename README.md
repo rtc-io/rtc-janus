@@ -6,7 +6,8 @@ An in progress node and browserify compatible integration layer for the
 
 [![NPM](https://nodei.co/npm/rtc-janus.png)](https://nodei.co/npm/rtc-janus/)
 
-[![unstable](http://hughsk.github.io/stability-badges/dist/unstable.svg)](http://github.com/hughsk/stability-badges)
+[![Build Status](https://travis-ci.org/rtc-io/rtc-janus.png?branch=master)](https://travis-ci.org/rtc-io/rtc-janus)
+[![experimental](http://hughsk.github.io/stability-badges/dist/experimental.svg)](http://github.com/hughsk/stability-badges)
 
 ## Example Usage
 
