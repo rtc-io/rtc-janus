@@ -204,6 +204,12 @@ proto._poll =function() {
           }
         }
 
+        if (data) {
+          // if we have jsep as part of the body request
+          // patch that into the data
+          data.jsep = body.jsep;
+        }
+
         session.emit(eventName, data, body);
       }
 

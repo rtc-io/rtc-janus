@@ -2,6 +2,7 @@ var janus = require('../');
 var test = require('tape');
 var session;
 var baseUrl = require('./helpers/url');
+var streamList;
 
 test('create a new session', function(t) {
   t.plan(2);
@@ -24,13 +25,32 @@ test('request the streaming plugin', function(t) {
 });
 
 test('request the steaming session list', function(t) {
-  t.plan(2);
+  t.plan(4);
 
   session.streaming({ request: 'list' }, function(err, data) {
     t.ifError(err);
     t.ok(data && data.list, 'got expected response');
+    t.ok(Array.isArray(data.list), 'list is a valid array');
+    t.ok(data.list.length > 0, 'have valid stream information');
 
-    console.log(data);
+    streamList = data.list;
+  });
+});
+
+test('ensure we have stream 2 to test against', function(t) {
+  t.plan(1);
+  targetStream = streamList.filter(function(stream) {
+    return stream.id === 2;
+  })[0];
+  t.ok(targetStream, 'have test stream (id == 2)');
+});
+
+test('request stream play', function(t) {
+  t.plan(3);
+  session.streaming({ request: 'watch', id: 2 }, function(err, data) {
+    t.ifError(err);
+    t.ok(data && data.status === 'preparing', 'preparing stream');
+    t.ok(data.jsep, 'got jsep data in response');
   });
 });
 
