@@ -8,13 +8,12 @@ notifications:
   irc: irc.freenode.org#rtc.io
 
 before_install:
-  sudo apt-get update -qq
-  sudo apt-get install -qq libmicrohttpd-dev libjansson-dev libnice-dev libssl-dev libsrtp-dev libsofia-sip-ua-dev libglib2.0-dev libogg-dev libini-config-dev libcollection-dev pkg-config gengetopt
-  git clone https://github.com/meetecho/janus-gateway.git
-  cd janus-gateway
-  make
-
-  ./janus & echo $! > janus.pid
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq libmicrohttpd-dev libjansson-dev libnice-dev libssl-dev libsrtp-dev libsofia-sip-ua-dev libglib2.0-dev libogg-dev libini-config-dev libcollection-dev pkg-config gengetopt
+  - git clone https://github.com/meetecho/janus-gateway.git
+  - cd janus-gateway
+  - make
+  - ./janus & echo $! > janus.pid
 
 after_script:
-  kill $(cat janus.pid)
+  - kill $(cat janus.pid)
