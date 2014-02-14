@@ -149,16 +149,28 @@ proto._message = function(id, body, callback) {
   var payload;
   var session = this;
   var transactionId;
+  var jsep;
+  var dupBody = {};
 
   if (typeof body == 'function') {
     callback = body;
     body = {};
   }
 
+  Object.keys(body).forEach(function(key) {
+    if (key === 'jsep') {
+      jsep = body[key];
+    }
+    else {
+      dupBody[key] = body[key];
+    }
+  });
+
   // initialise the payload
   payload = {
-    body: body,
-    janus: 'message'
+    body: dupBody,
+    janus: 'message',
+    jsep: jsep
   };
 
   transactionId = this._post(payload, { path: id, ok: 'ack' }, function(err) {
