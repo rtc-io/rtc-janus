@@ -1,6 +1,6 @@
 {
   "name": "rtc-janus",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Node and browserify compatible integration layer for the Janus WebRTC gateway",
   "main": "index.js",
   "scripts": {
