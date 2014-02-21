@@ -19,8 +19,6 @@ test('request the audiobridge plugin', function(t) {
 
   session.activate('audiobridge', function(err) {
     t.ifError(err);
-
-    // ensure the session plugins videocall is active
     t.ok(session.plugins.audiobridge, 'audiobridge plugin activated');
   });
 });
