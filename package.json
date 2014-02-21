@@ -32,6 +32,7 @@
   },
   "devDependencies": {
     "tape": "~2.4.2",
-    "async": "~0.2.10"
+    "async": "~0.2.10",
+    "random-name": "~0.1.0"
   }
 }
