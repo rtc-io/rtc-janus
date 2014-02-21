@@ -203,7 +203,7 @@ proto._poll =function() {
 
     if (! ok) {
       // TODO: more error details
-      return callback(new Error('request failed: ' + res.statusCode));
+      return session.emit('poll:error', new Error('request failed: ' + res.statusCode));
     }
 
     res.on('data', function(data) {
