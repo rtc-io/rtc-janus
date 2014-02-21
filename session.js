@@ -190,6 +190,10 @@ proto._poll =function() {
   var req;
   var session = this;
   var chunks = [];
+  var requestOpts = {
+    uri: this.uri + '/' + this.id + '?rid=' + Date.now(),
+    withCredentials: false
+  };
 
   // if we have no session id then abort
   if (! this.id) {
@@ -197,7 +201,7 @@ proto._poll =function() {
   }
 
   // create the request
-  req = this.pollRequest = request.get(this.uri + '/' + this.id + '?rid=' + Date.now());
+  req = this.pollRequest = request.get(requestOpts);
   req.on('response', function(res) {
     var ok = res && res.statusCode === 200;
 
@@ -270,9 +274,12 @@ proto._poll =function() {
 proto._post = function(payload, opts, callback) {
   var req;
   var chunks = [];
-  var uri = this.uri;
   var okResponse = 'success';
   var transactionId = uuid.v4();
+  var requestOpts = {
+    uri: this.uri,
+    withCredentials: false
+  };
 
   if (typeof opts == 'function') {
     callback = opts;
@@ -286,11 +293,11 @@ proto._post = function(payload, opts, callback) {
 
   // if we have a valid session id then route the request to that session
   if (this.id) {
-    uri += '/' + this.id + (opts && opts.path ? '/' + opts.path : '');
+    requestOpts.uri += '/' + this.id + (opts && opts.path ? '/' + opts.path : '');
   }
 
   // create the request
-  req = request.post(uri);
+  req = request.post(requestOpts);
 
   // attach a transaction to the payload
   payload = extend({ transaction: transactionId }, payload);
