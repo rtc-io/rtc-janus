@@ -26,7 +26,7 @@
   },
   "homepage": "https://github.com/rtc-io/rtc-janus",
   "dependencies": {
-    "hyperquest": "~0.2.0",
+    "hyperquest": "DamonOehlman/hyperquest#69a92a10453e91d36d2677300c068d7cc6e84b83",
     "uuid": "~1.4.1",
     "cog": "~0.5.1"
   },
